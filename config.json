@@ -1,0 +1,17 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "http_port": 5000,
+    "https": false
+  },
+  "tcp_ports": [
+    {
+      "printer": "POS-80",
+      "port": 9101
+    },
+    {
+      "printer": "POS-80C",
+      "port": 9100
+    }
+  ]
+}

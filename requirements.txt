@@ -1,0 +1,6 @@
+pywin32
+fastapi
+uvicorn
+cryptography
+pyside6
+pillow
