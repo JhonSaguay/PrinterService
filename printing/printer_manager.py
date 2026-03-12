@@ -11,6 +11,9 @@ def list_printers():
     printers = win32print.EnumPrinters(2)
     return [p[2] for p in printers]
 
+def get_all_printers():
+    return config["tcp_ports"]
+
 def get_printer_by_port(port):
     return printers_list.get(port)
 
@@ -28,8 +31,6 @@ def send_to_printer(printer, data):
 
         win32print.StartPagePrinter(printer_handle)
 
-        init = b'\x1b@'
-        print(data[:20])
         win32print.WritePrinter(printer_handle, data)
 
         win32print.EndPagePrinter(printer_handle)

@@ -2,7 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from printing.print_queue import print_queue
-from printing.printer_manager import get_printer_by_port
+from printing.printer_manager import get_printer_by_port, get_all_printers
+from bs4 import BeautifulSoup
+from PIL import Image
+import io
+import math
+MAX_WIDTH = 576 
 import base64
 
 app = FastAPI()
@@ -14,6 +19,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def printers():
+
+    printers = get_all_printers()
+
+    if not printers:
+        return {"error": "printer not found"}
+
+    return {
+        "jsonrpc": "2.0",
+        "result": printers
+    }
 
 @app.get("/{port}/hw_proxy/hello", response_class=PlainTextResponse)
 def hello(port: int):
@@ -60,6 +78,126 @@ def status(port: int):
         }
     }
 
+# Base64
+def detect_format(data):
+
+    if data.startswith(b'%PDF'):
+        return "pdf"
+
+    if data.startswith(b'\x89PNG'):
+        return "png"
+
+    if data.startswith(b'\xff\xd8'):
+        return "jpg"
+
+    if data.startswith(b'\x1b'):
+        return "escpos"
+
+    return "unknown"
+
+def get_max_width(paper):
+    return 576 if paper == 80 else 384
+
+def convert_image_to_escpos(image_bytes, printer):
+    MAX_WIDTH = get_max_width(printer["paper"])
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # if img.width > MAX_WIDTH:
+
+    ratio = MAX_WIDTH / img.width
+
+    img = img.resize(
+        (MAX_WIDTH, int(img.height * ratio)),
+        Image.LANCZOS
+    )
+    
+    img = img.convert("1", dither=Image.FLOYDSTEINBERG)
+    
+    width, height = img.size
+
+    width_bytes = math.ceil(width / 8)
+
+    block_height = 256
+
+    raster = bytearray()
+    pixels = img.load()
+    for y_start in range(0, height, block_height):
+
+        h = min(block_height, height - y_start)
+
+        # cabecera ESC/POS
+        raster.extend(b'\x1d\x76\x30\x00')
+        raster.extend(width_bytes.to_bytes(2, 'little'))
+        raster.extend(h.to_bytes(2, 'little'))
+
+        for y in range(y_start, y_start + h):
+
+            for x in range(width_bytes):
+
+                byte = 0
+
+                for bit in range(8):
+
+                    px = x * 8 + bit
+
+                    if px < width and pixels[px, y] == 0:
+                        byte |= 1 << (7 - bit)
+
+                raster.append(byte)
+    return bytes(raster)
+
+# obtener data html
+
+def html_to_escpos(html):
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    root = soup.select_one(".pos-receipt")
+
+    lines = []
+
+    for div in root.find_all("div", recursive=False):
+
+        text = div.get_text(" ", strip=True)
+
+        if text:
+            lines.append(text)
+
+    receipt = "\n".join(lines) + "\n\n"
+
+    return receipt.encode("cp437", errors="replace")
+
+
+def process_print_data(data, printer):
+    action = data.get('action',False)
+    receipt = data.get('receipt',False)
+    receipt_data = False
+    init = b'\x1b@'
+    cut =  b'\n\n\n\x1dV\x00'
+    FEED = b'\x1b\x64\x05'
+    # JPEG header
+    if action == 'print_receipt':
+        if receipt.get('isBase64', False):
+            receipt_data = base64.b64decode(receipt.get('data',''))
+            if receipt_data.startswith(b'\xff\xd8') or receipt_data.startswith(b'\x89PNG'):
+                receipt_data = convert_image_to_escpos(receipt_data, printer)
+                receipt_data = init + receipt_data + FEED + cut
+        else:
+            receipt_data = receipt.get('data','')
+            receipt_data = html_to_escpos(receipt_data)
+            receipt_data = init + receipt_data + FEED + cut
+
+    elif action == 'cashbox':
+        receipt_data = b'\x1b\x70\x00\x19\xfa'
+        print('Abrir cajon')
+    else:
+        print('No validado') 
+
+    # ya es ESC/POS
+    return receipt_data
+
+
+
 @app.post("/{port}/hw_proxy/default_printer_action")
 async def default_printer_action(port: int, payload: dict):
 
@@ -76,13 +214,16 @@ async def default_printer_action(port: int, payload: dict):
             print("No data received")
             result = False
         else:
-            receipt_data = data.get('receipt',False)
-            if not receipt_data:
+            # action type
+
+            # receipt_data = data.get('receipt',False)
+            print_data = process_print_data(data, printer)
+            if not print_data:
                 print("No data received")
                 result = False
             else:
                 print(f"Printing to port {port}")
-                print_data = base64.b64decode(receipt_data.get('data',''))
+                # print_data = base64.b64decode(receipt_data.get('data',''))
 
                 print_queue.put({
                     "printer": printer['printer'],

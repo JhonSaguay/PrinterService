@@ -1,17 +1,19 @@
 {
   "server": {
-    "host": "127.0.0.1",
-    "http_port": 5000,
-    "https": false
+    "host": "192.168.68.57",
+    "http_port": 4000,
+    "https": true
   },
   "tcp_ports": [
     {
       "printer": "POS-80",
-      "port": 9101
+      "port": 9101,
+      "paper": 80
     },
     {
       "printer": "POS-80C",
-      "port": 9100
+      "port": 9100,
+      "paper": 58
     }
   ]
 }

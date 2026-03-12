@@ -24,14 +24,15 @@ class ConfigManager:
 
         return False
 
-    def add_printer(self, printer, port):
+    def add_printer(self, printer, port, paper_size):
 
         if self.port_exists(port):
             raise ValueError("El puerto ya está asignado")
 
         self.config["tcp_ports"].append({
             "printer": printer,
-            "port": port
+            "port": port,
+            "paper": paper_size
         })
     
     def remove_printer(self, port):
@@ -44,6 +45,10 @@ class ConfigManager:
     def set_https(self, enabled):
 
         self.config["server"]["https"] = enabled
+    
+    def set_server_port(self, server_port):
+
+        self.config["server"]["http_port"] = server_port
 
     def set_host(self, host):
 

@@ -4,3 +4,4 @@ uvicorn
 cryptography
 pyside6
 pillow
+beautifulsoup4

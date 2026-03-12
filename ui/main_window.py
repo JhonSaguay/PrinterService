@@ -30,6 +30,16 @@ class MainWindow(QWidget):
 
         layout.addWidget(self.txt_ip)
 
+        # Server Port
+
+        layout.addWidget(QLabel("Port servidor"))
+        
+        self.txt_server_port = QSpinBox()
+        self.txt_server_port.setRange(1, 65535)
+        self.txt_server_port.setValue(config.get_server()["http_port"])
+
+        layout.addWidget(self.txt_server_port)
+
         # HTTPS
 
         self.chk_https = QCheckBox("Activar HTTPS")
@@ -63,6 +73,13 @@ class MainWindow(QWidget):
         self.port_box.setValue(9100)
 
         row.addWidget(self.port_box)
+
+        # paper size
+        self.paper_size = QComboBox()
+        self.paper_size.addItem("80 mm", 80)
+        self.paper_size.addItem("58 mm", 58)
+
+        row.addWidget(self.paper_size)
 
         # boton agregar
 
@@ -107,15 +124,16 @@ class MainWindow(QWidget):
 
         for p in self.config.get_tcp_ports():
 
-            text = f"{p['printer']}  ->  {p['port']}"
+            text = f"{p['printer']}  ->  {p['port']} ->  {p['paper']}mm"
             self.list_printers.addItem(text)
 
     def add_printer(self):
 
         printer = self.cmb_printers.currentText()
         port = self.port_box.value()
+        paper_size = self.paper_size.currentData()
 
-        self.config.add_printer(printer, port)
+        self.config.add_printer(printer, port, paper_size)
 
         self.load_printers()
     
@@ -138,9 +156,11 @@ class MainWindow(QWidget):
 
         host = self.txt_ip.text()
         https = self.chk_https.isChecked()
+        server_port = self.txt_server_port.value()
 
         self.config.set_host(host)
         self.config.set_https(https)
+        self.config.set_server_port(server_port)
 
         self.config.save()
 
