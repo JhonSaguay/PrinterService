@@ -1,6 +1,6 @@
 {
   "server": {
-    "host": "192.168.68.57",
+    "host": "192.168.68.50",
     "http_port": 4000,
     "https": true
   },

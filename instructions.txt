@@ -1,0 +1,16 @@
+Remake installer file
+
+pyinstaller main.py --onefile --name POSPrinterConsole
+pyinstaller main.py --noconsole --onefile --name POSPrinter
+
+Install mkcert and openssl as Administrator
+- choco install mkcert
+- choco install openssl -y
+
+Generate android  CA
+
+- mkcert -CAROOT
+
+Generate cert for android and iphone from mkcert folder
+
+- openssl x509 -outform der -in rootCA.pem -out rootCA.cer

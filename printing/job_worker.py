@@ -7,7 +7,6 @@ def worker():
 
     while True:
         job = print_queue.get()
-        print("JOB RECEIVED:", job["printer"])
         try:
             send_to_printer(job["printer"], job["data"])
             log(f"Printed → {job['printer']}")

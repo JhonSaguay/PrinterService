@@ -10,9 +10,25 @@ config = ConfigManager()
 
 server = POSPrintServer(config)
 
-app = QApplication(sys.argv)
+def run_ui():
 
-window = MainWindow(server, config)
-window.show()
+    app = QApplication(sys.argv)
 
-sys.exit(app.exec())
+    window = MainWindow(server, config)
+    window.show()
+
+    sys.exit(app.exec())
+
+
+def run_service():
+
+    # corre el servidor sin interfaz
+    server.start()
+
+
+if __name__ == "__main__":
+
+    if "--service" in sys.argv:
+        run_service()
+    else:
+        run_ui()

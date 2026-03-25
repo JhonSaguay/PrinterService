@@ -5,3 +5,4 @@ cryptography
 pyside6
 pillow
 beautifulsoup4
+pywin32

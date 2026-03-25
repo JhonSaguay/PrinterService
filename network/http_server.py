@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from printing.print_queue import print_queue
@@ -7,7 +8,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 import io
 import math
-MAX_WIDTH = 576 
+from core.logger import log
 import base64
 
 app = FastAPI()
@@ -19,6 +20,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    return {}
 
 @app.get("/")
 def printers():
@@ -177,15 +182,21 @@ def process_print_data(data, printer):
     FEED = b'\x1b\x64\x05'
     # JPEG header
     if action == 'print_receipt':
-        if receipt.get('isBase64', False):
-            receipt_data = base64.b64decode(receipt.get('data',''))
+        if isinstance(receipt, str):
+            receipt_data = base64.b64decode(receipt)
             if receipt_data.startswith(b'\xff\xd8') or receipt_data.startswith(b'\x89PNG'):
                 receipt_data = convert_image_to_escpos(receipt_data, printer)
                 receipt_data = init + receipt_data + FEED + cut
         else:
-            receipt_data = receipt.get('data','')
-            receipt_data = html_to_escpos(receipt_data)
-            receipt_data = init + receipt_data + FEED + cut
+            if receipt.get('isBase64', False):
+                receipt_data = base64.b64decode(receipt.get('data',''))
+                if receipt_data.startswith(b'\xff\xd8') or receipt_data.startswith(b'\x89PNG'):
+                    receipt_data = convert_image_to_escpos(receipt_data, printer)
+                    receipt_data = init + receipt_data + FEED + cut
+            else:
+                receipt_data = receipt.get('data','')
+                receipt_data = html_to_escpos(receipt_data)
+                receipt_data = init + receipt_data + FEED + cut
 
     elif action == 'cashbox':
         receipt_data = b'\x1b\x70\x00\x19\xfa'
@@ -209,7 +220,6 @@ async def default_printer_action(port: int, payload: dict):
 
         data = params.get("data")
         printer = get_printer_by_port(port)
-
         if not data:
             print("No data received")
             result = False
@@ -240,7 +250,7 @@ async def default_printer_action(port: int, payload: dict):
 
     except Exception as e:
 
-        print("Printer action error:", e)
+        log(f"Printer action error: {e}")
 
         return {
             "jsonrpc": "2.0",

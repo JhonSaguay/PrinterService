@@ -19,8 +19,6 @@ def get_printer_by_port(port):
 
 
 def send_to_printer(printer, data):
-    print(printer)
-    print(type(data))
     printer_handle = win32print.OpenPrinter(printer)
 
     try:

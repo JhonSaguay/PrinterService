@@ -1,6 +1,5 @@
 import json
 
-
 class ConfigManager:
 
     def __init__(self, path="config.json"):

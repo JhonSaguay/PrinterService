@@ -1,46 +1,26 @@
+import subprocess
 import os
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-import datetime
 
-def generate_cert():
-
+def generate_cert(host="127.0.0.1"):
     os.makedirs("certs", exist_ok=True)
+    cert_path = "certs/cert.pem"
+    key_path = "certs/key.pem"
 
-    key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
+    try:
+        # instalar CA (solo la primera vez)
+        subprocess.run(["mkcert", "-install"], check=True)
 
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "EC"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "POS Server"),
-        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-    ])
+        # generar certificado
+        subprocess.run([
+            "mkcert",
+            "-key-file", key_path,
+            "-cert-file", cert_path,
+            "localhost",
+            "127.0.0.1",
+            host
+        ], check=True)
 
-    cert = (
-        x509.CertificateBuilder()
-        .subject_name(subject)
-        .issuer_name(issuer)
-        .public_key(key.public_key())
-        .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.utcnow())
-        .not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=3650)
-        )
-        .sign(key, hashes.SHA256())
-    )
+        print("✅ Certificado generado con mkcert")
 
-    with open("certs/key.pem", "wb") as f:
-        f.write(
-            key.private_bytes(
-                serialization.Encoding.PEM,
-                serialization.PrivateFormat.TraditionalOpenSSL,
-                serialization.NoEncryption()
-            )
-        )
-
-    with open("certs/cert.pem", "wb") as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))
+    except Exception as e:
+        print("❌ Error generando certificado:", e)
