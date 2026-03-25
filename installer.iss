@@ -4,20 +4,19 @@ AppVersion=1.0
 DefaultDirName={pf}\POSPrinter
 DefaultGroupName=POSPrinter
 OutputDir=output
-OutputBaseFilename=POSPrinterInstaller
+OutputBaseFilename=POSPrinterInstallerConsole
 Compression=lzma
 SolidCompression=yes
 
 [Files]
-Source: "dist\POSPrinter.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\POSPrinterConsole.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "nssm\win64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "config.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "certs\*"; DestDir: "{app}\certs"; Flags: recursesubdirs
 Source: "logs\*"; DestDir: "{app}\logs"; Flags: recursesubdirs createallsubdirs
 
 [Run]
 ; Instalar servicio
-Filename: "{app}\nssm.exe"; Parameters: "install POSPrinter ""{app}\POSPrinter.exe"" --service"; Flags: runhidden
+Filename: "{app}\nssm.exe"; Parameters: "install POSPrinter ""{app}\POSPrinterConsole.exe"" --service"; Flags: runhidden
 
 ; Configurar carpeta de trabajo
 Filename: "{app}\nssm.exe"; Parameters: "set POSPrinter AppDirectory ""{app}"""; Flags: runhidden
