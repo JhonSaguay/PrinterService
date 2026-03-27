@@ -1,9 +1,12 @@
 import uvicorn
-from network.tcp_server import start_tcp_server
 from network.http_server import app
 from printing.job_worker import start_workers
 from security.cert_manager import generate_cert
+from core.async_loop import loop, init_async_loop
+from core.renderer_instance import renderer
 import os
+import asyncio
+
 
 class POSPrintServer:
 
@@ -12,11 +15,15 @@ class POSPrintServer:
         self.config = config
 
     def start(self):
+
+        init_async_loop()
+
+        future = asyncio.run_coroutine_threadsafe(renderer.start(), loop)
+        future.result()
+
         start_workers()
-
-        for p in self.config.get_tcp_ports():
-            start_tcp_server(p["port"], p["printer"])
-
+        
+        
         server = self.config.get_server()
 
         https = server["https"]

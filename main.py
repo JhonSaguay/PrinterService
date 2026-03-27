@@ -1,4 +1,5 @@
 import sys
+import subprocess
 from PySide6.QtWidgets import QApplication
 
 from core.config_manager import ConfigManager
@@ -24,7 +25,6 @@ def run_service():
 
     # corre el servidor sin interfaz
     server.start()
-
 
 if __name__ == "__main__":
 

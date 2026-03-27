@@ -3,6 +3,7 @@ Remake installer file
 pyinstaller main.py --onefile --name POSPrinterConsole
 pyinstaller main.py --noconsole --onefile --name POSPrinter
 
+Install Choco - using Powershell
 Install mkcert and openssl as Administrator
 - choco install mkcert
 - choco install openssl -y

@@ -4,19 +4,20 @@ AppVersion=1.0
 DefaultDirName={pf}\POSPrinter
 DefaultGroupName=POSPrinter
 OutputDir=output
-OutputBaseFilename=POSPrinterInstallerConsole
+OutputBaseFilename=POSPrinterUltimate
 Compression=lzma
 SolidCompression=yes
 
 [Files]
-Source: "dist\POSPrinterConsole.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\POSPrinter.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "nssm\win64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "config.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "logs\*"; DestDir: "{app}\logs"; Flags: recursesubdirs createallsubdirs
+Source: "ms-playwright\*"; DestDir: "{app}\ms-playwright"; Flags: recursesubdirs createallsubdirs
 
 [Run]
 ; Instalar servicio
-Filename: "{app}\nssm.exe"; Parameters: "install POSPrinter ""{app}\POSPrinterConsole.exe"" --service"; Flags: runhidden
+Filename: "{app}\nssm.exe"; Parameters: "install POSPrinter ""{app}\POSPrinter.exe"" --service"; Flags: runhidden
 
 ; Configurar carpeta de trabajo
 Filename: "{app}\nssm.exe"; Parameters: "set POSPrinter AppDirectory ""{app}"""; Flags: runhidden
@@ -29,4 +30,4 @@ Filename: "{app}\nssm.exe"; Parameters: "set POSPrinter AppStderr ""{app}\logs\e
 Filename: "{app}\nssm.exe"; Parameters: "set POSPrinter Start SERVICE_AUTO_START"; Flags: runhidden
 
 ; Iniciar servicio
-Filename: "{app}\nssm.exe"; Parameters: "start POSPrinter"; Flags: runhidden
+;Filename: "{app}\nssm.exe"; Parameters: "start POSPrinter"; Flags: runhidden
